@@ -1,0 +1,46 @@
+// SPDX-License-Identifier: PMPL-1.0-or-later
+// Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
+= Eclexiaiser
+Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
+:toc: left
+:icons: font
+
+== What Is This?
+
+Eclexiaiser adds **energy, carbon, memory, and time cost awareness** to
+existing software — treating resource economics as first-class constraints.
+
+Eclexia is an economics-as-code language where `@requires` and `@provides`
+constraints make resource costs explicit and optimisable. Eclexiaiser brings
+this to existing codebases.
+
+== How It Works
+
+Annotate functions with resource budgets in `eclexiaiser.toml`. Eclexiaiser:
+
+1. Analyses your code for resource consumption patterns
+2. Generates Eclexia constraint annotations (`@requires energy < 5kWh`)
+3. Optimises execution paths under multiple resource constraints simultaneously
+4. Reports violations: "this function exceeds its carbon budget by 40%"
+5. Selects adaptive solutions under changing runtime conditions
+
+== Key Value
+
+* **Carbon-aware computing** — know the environmental cost of every function
+* **Multi-resource optimisation** — energy, time, memory, bandwidth together
+* **Sustainability compliance** — prove your software meets green computing standards
+* **Cost prediction** — estimate cloud costs before deployment
+
+== Architecture
+
+Follows the hyperpolymath -iser pattern:
+manifest -> Idris2 ABI proof -> Zig FFI bridge -> target language codegen.
+Part of the https://github.com/hyperpolymath/iseriser[-iser family].
+
+== Status
+
+**Pre-alpha.** Architecture defined, scaffolding in place, codegen pending.
+
+== License
+
+SPDX-License-Identifier: PMPL-1.0-or-later
