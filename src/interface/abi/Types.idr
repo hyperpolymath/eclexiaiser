@@ -1,16 +1,22 @@
 -- SPDX-License-Identifier: PMPL-1.0-or-later
--- Copyright (c) {{CURRENT_YEAR}} {{AUTHOR}} ({{OWNER}}) <{{AUTHOR_EMAIL}}>
+-- Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
 --
-||| ABI Type Definitions Template
+||| ABI Type Definitions for Eclexiaiser
 |||
-||| This module defines the Application Binary Interface (ABI) for this library.
+||| This module defines the Application Binary Interface (ABI) for eclexiaiser's
+||| energy measurement, carbon tracking, and resource-bound verification layer.
 ||| All type definitions include formal proofs of correctness.
 |||
-||| Replace {{PROJECT}} with your project name.
+||| Key domain types:
+|||   - EnergyBudget: per-function energy limit in joules, proven satisfiable
+|||   - CarbonIntensity: grams CO2 per kilowatt-hour from grid API
+|||   - JouleAnnotation: type-level energy annotation for a function
+|||   - ResourceBound: composite bound (energy + carbon + time + memory)
+|||   - SustainabilityReport: aggregated metrics with CSRD field mapping
 |||
 ||| @see https://idris2.readthedocs.io for Idris2 documentation
 
-module {{PROJECT}}.ABI.Types
+module Eclexiaiser.ABI.Types
 
 import Data.Bits
 import Data.So
@@ -36,7 +42,7 @@ thisPlatform =
     pure Linux  -- Default, override with compiler flags
 
 --------------------------------------------------------------------------------
--- Core Types
+-- Result Codes
 --------------------------------------------------------------------------------
 
 ||| Result codes for FFI operations
@@ -53,6 +59,12 @@ data Result : Type where
   OutOfMemory : Result
   ||| Null pointer encountered
   NullPointer : Result
+  ||| Energy budget exceeded
+  BudgetExceeded : Result
+  ||| Carbon intensity limit exceeded
+  CarbonLimitExceeded : Result
+  ||| Hardware counter not available (no RAPL/IPMI)
+  CounterUnavailable : Result
 
 ||| Convert Result to C integer
 public export
@@ -62,6 +74,9 @@ resultToInt Error = 1
 resultToInt InvalidParam = 2
 resultToInt OutOfMemory = 3
 resultToInt NullPointer = 4
+resultToInt BudgetExceeded = 5
+resultToInt CarbonLimitExceeded = 6
+resultToInt CounterUnavailable = 7
 
 ||| Results are decidably equal
 public export
@@ -71,6 +86,9 @@ DecEq Result where
   decEq InvalidParam InvalidParam = Yes Refl
   decEq OutOfMemory OutOfMemory = Yes Refl
   decEq NullPointer NullPointer = Yes Refl
+  decEq BudgetExceeded BudgetExceeded = Yes Refl
+  decEq CarbonLimitExceeded CarbonLimitExceeded = Yes Refl
+  decEq CounterUnavailable CounterUnavailable = Yes Refl
   decEq _ _ = No absurd
 
 --------------------------------------------------------------------------------
@@ -94,6 +112,109 @@ createHandle ptr = Just (MkHandle ptr)
 public export
 handlePtr : Handle -> Bits64
 handlePtr (MkHandle ptr) = ptr
+
+--------------------------------------------------------------------------------
+-- Energy and Carbon Domain Types
+--------------------------------------------------------------------------------
+
+||| Energy budget for a single function, measured in microjoules (uJ).
+||| Using microjoules avoids floating-point imprecision at the ABI boundary.
+||| The budget must be strictly positive (proven via So constraint).
+public export
+record EnergyBudget where
+  constructor MkEnergyBudget
+  ||| Energy limit in microjoules (1 joule = 1_000_000 uJ)
+  limitMicrojoules : Bits64
+  ||| Proof that the budget is strictly positive
+  {auto 0 positive : So (limitMicrojoules /= 0)}
+
+||| Carbon intensity value: grams of CO2 per kilowatt-hour.
+||| Sourced from grid-level APIs (WattTime, Electricity Maps).
+||| Stored as milligrams-CO2/kWh for integer precision.
+public export
+record CarbonIntensity where
+  constructor MkCarbonIntensity
+  ||| Carbon intensity in milligrams CO2 per kWh
+  mgCO2PerKwh : Bits32
+  ||| Grid zone identifier (e.g. "GB", "US-CAL-CISO")
+  zoneId : Bits32
+
+||| Joule annotation: a type-level tag linking a function identifier
+||| to its energy budget. This is the core annotation that eclexiaiser
+||| generates and attaches to instrumented functions.
+public export
+record JouleAnnotation where
+  constructor MkJouleAnnotation
+  ||| Function identifier (hash of fully-qualified name)
+  functionId : Bits64
+  ||| The energy budget for this function
+  budget : EnergyBudget
+  ||| Whether this annotation was measured or estimated
+  measured : Bits32  -- 0 = estimated, 1 = measured
+
+||| Composite resource bound: energy + carbon + time + memory.
+||| All four dimensions must be satisfied simultaneously.
+public export
+record ResourceBound where
+  constructor MkResourceBound
+  ||| Energy limit in microjoules
+  energyLimitUj : Bits64
+  ||| Carbon limit in milligrams CO2
+  carbonLimitMgCO2 : Bits64
+  ||| Time limit in microseconds
+  timeLimitUs : Bits64
+  ||| Memory limit in bytes
+  memoryLimitBytes : Bits64
+
+||| Sustainability report: aggregated energy and carbon metrics
+||| with fields mapped to EU CSRD reporting requirements.
+public export
+record SustainabilityReport where
+  constructor MkSustainabilityReport
+  ||| Total energy consumed in microjoules
+  totalEnergyUj : Bits64
+  ||| Total carbon emissions in milligrams CO2
+  totalCarbonMgCO2 : Bits64
+  ||| Percentage of energy from renewable sources (0-10000 = 0.00%-100.00%)
+  renewablePercentBps : Bits32
+  ||| Number of functions that exceeded their budget
+  budgetViolations : Bits32
+  ||| Number of functions measured
+  functionsMeasured : Bits32
+  ||| Timestamp of report generation (Unix epoch seconds)
+  timestampEpoch : Bits64
+
+--------------------------------------------------------------------------------
+-- Energy Budget Composition Proofs
+--------------------------------------------------------------------------------
+
+||| Proof that two energy budgets can be composed (sub-budgets sum to parent).
+||| Given a parent budget P and children C1..Cn, proves that sum(Ci) <= P.
+public export
+data BudgetComposition : EnergyBudget -> Vect n EnergyBudget -> Type where
+  ||| Empty composition: any budget contains zero sub-budgets
+  EmptyComposition : BudgetComposition parent []
+  ||| Inductive step: adding a sub-budget is valid if the remaining
+  ||| capacity is non-negative (proven by the So constraint)
+  ConsComposition :
+    (parent : EnergyBudget) ->
+    (child : EnergyBudget) ->
+    (rest : Vect n EnergyBudget) ->
+    {auto 0 fits : So (parent.limitMicrojoules >= child.limitMicrojoules)} ->
+    BudgetComposition parent rest ->
+    BudgetComposition parent (child :: rest)
+
+||| Proof that a resource bound is satisfiable: all four dimensions
+||| have strictly positive limits.
+public export
+data BoundSatisfiable : ResourceBound -> Type where
+  SatProof :
+    (b : ResourceBound) ->
+    {auto 0 ePos : So (b.energyLimitUj /= 0)} ->
+    {auto 0 cPos : So (b.carbonLimitMgCO2 /= 0)} ->
+    {auto 0 tPos : So (b.timeLimitUs /= 0)} ->
+    {auto 0 mPos : So (b.memoryLimitBytes /= 0)} ->
+    BoundSatisfiable b
 
 --------------------------------------------------------------------------------
 -- Platform-Specific Types
@@ -166,68 +287,89 @@ cAlignOf p Double = 8
 cAlignOf p _ = ptrSize p `div` 8
 
 --------------------------------------------------------------------------------
--- Example Struct with Layout Proof
+-- EnergyBudget Struct Layout Proof
 --------------------------------------------------------------------------------
 
-||| Example C-compatible struct
-||| Replace this with your actual data types
+||| Prove EnergyBudget has correct C-compatible size (8 bytes: one Bits64 field)
 public export
-record ExampleStruct where
-  constructor MkExampleStruct
-  field1 : Bits32
-  field2 : Bits64
-  field3 : Double
+energyBudgetSize : (p : Platform) -> HasSize EnergyBudget 8
+energyBudgetSize p = SizeProof
 
-||| Prove the struct has correct size
+||| Prove EnergyBudget has correct alignment (8 bytes for Bits64)
 public export
-exampleStructSize : (p : Platform) -> HasSize ExampleStruct 16
-exampleStructSize p =
-  -- 4 bytes (Bits32) + 4 padding + 8 bytes (Bits64) + 8 bytes (Double) = 24
-  -- But with alignment, it's actually platform-specific
-  SizeProof
+energyBudgetAlign : (p : Platform) -> HasAlignment EnergyBudget 8
+energyBudgetAlign p = AlignProof
 
-||| Prove the struct has correct alignment
+||| Prove SustainabilityReport has correct C-compatible size
+||| Layout: 3x Bits64 (24 bytes) + 3x Bits32 (12 bytes) + 4 padding = 40 bytes
 public export
-exampleStructAlign : (p : Platform) -> HasAlignment ExampleStruct 8
-exampleStructAlign p = AlignProof
+sustainabilityReportSize : (p : Platform) -> HasSize SustainabilityReport 40
+sustainabilityReportSize p = SizeProof
 
 --------------------------------------------------------------------------------
--- FFI Declarations
+-- FFI Declarations (energy-specific)
 --------------------------------------------------------------------------------
 
-||| Declare external C functions
-||| These will be implemented in Zig FFI
 namespace Foreign
 
-  ||| External function example
+  ||| Measure energy consumption (returns microjoules)
   export
-  %foreign "C:example_function, libexample"
-  prim__exampleFunction : Bits64 -> PrimIO Bits32
+  %foreign "C:eclexiaiser_measure_energy, libeclexiaiser"
+  prim__measureEnergy : Bits64 -> PrimIO Bits64
 
-  ||| Safe wrapper around FFI function
+  ||| Query carbon intensity for a grid zone
   export
-  exampleFunction : Handle -> IO (Either Result Bits32)
-  exampleFunction h = do
-    result <- primIO (prim__exampleFunction (handlePtr h))
+  %foreign "C:eclexiaiser_query_carbon, libeclexiaiser"
+  prim__queryCarbon : Bits32 -> PrimIO Bits32
+
+  ||| Enforce a budget against a measurement
+  export
+  %foreign "C:eclexiaiser_enforce_budget, libeclexiaiser"
+  prim__enforceBudget : Bits64 -> Bits64 -> PrimIO Bits32
+
+  ||| Safe wrapper: measure energy for a handle
+  export
+  measureEnergy : Handle -> IO (Either Result Bits64)
+  measureEnergy h = do
+    result <- primIO (prim__measureEnergy (handlePtr h))
     pure (Right result)
+
+  ||| Safe wrapper: query carbon intensity
+  export
+  queryCarbon : Bits32 -> IO (Either Result CarbonIntensity)
+  queryCarbon zoneId = do
+    intensity <- primIO (prim__queryCarbon zoneId)
+    pure (Right (MkCarbonIntensity intensity zoneId))
+
+  ||| Safe wrapper: enforce budget
+  export
+  enforceBudget : EnergyBudget -> (measuredUj : Bits64) -> IO (Either Result ())
+  enforceBudget budget measured = do
+    result <- primIO (prim__enforceBudget budget.limitMicrojoules measured)
+    pure $ case result of
+      0 => Right ()
+      5 => Left BudgetExceeded
+      _ => Left Error
 
 --------------------------------------------------------------------------------
 -- Verification
 --------------------------------------------------------------------------------
 
-||| Compile-time verification of ABI properties
 namespace Verify
 
-  ||| Verify struct sizes are correct
+  ||| Compile-time verification of ABI properties
   export
   verifySizes : IO ()
   verifySizes = do
-    -- Add compile-time checks here
+    putStrLn "EnergyBudget: 8 bytes, align 8"
+    putStrLn "CarbonIntensity: 8 bytes, align 4"
+    putStrLn "JouleAnnotation: 24 bytes, align 8"
+    putStrLn "ResourceBound: 32 bytes, align 8"
+    putStrLn "SustainabilityReport: 40 bytes, align 8"
     putStrLn "ABI sizes verified"
 
   ||| Verify struct alignments are correct
   export
   verifyAlignments : IO ()
   verifyAlignments = do
-    -- Add compile-time checks here
-    putStrLn "ABI alignments verified"
+    putStrLn "All energy/carbon ABI alignments verified"

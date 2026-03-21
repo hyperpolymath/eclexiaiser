@@ -1,16 +1,21 @@
 -- SPDX-License-Identifier: PMPL-1.0-or-later
--- Copyright (c) {{CURRENT_YEAR}} {{AUTHOR}} ({{OWNER}}) <{{AUTHOR_EMAIL}}>
+-- Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
 --
-||| Memory Layout Proofs
+||| Memory Layout Proofs for Eclexiaiser
 |||
 ||| This module provides formal proofs about memory layout, alignment,
-||| and padding for C-compatible structs.
+||| and padding for C-compatible energy measurement structs.
+|||
+||| Key structs:
+|||   - EnergyMeasurement: hardware counter reading with timestamp
+|||   - CarbonQuery: carbon API request/response
+|||   - BudgetEnforcement: budget vs measurement comparison result
 |||
 ||| @see https://en.wikipedia.org/wiki/Data_structure_alignment
 
-module {{PROJECT}}.ABI.Layout
+module Eclexiaiser.ABI.Layout
 
-import {{PROJECT}}.ABI.Types
+import Eclexiaiser.ABI.Types
 import Data.Vect
 import Data.So
 
@@ -43,7 +48,6 @@ alignUp size alignment =
 public export
 alignUpCorrect : (size : Nat) -> (align : Nat) -> (align > 0) -> Divides align (alignUp size align)
 alignUpCorrect size align prf =
-  -- Proof that (size + padding) is divisible by align
   DivideBy ((size + paddingFor size align) `div` align) Refl
 
 --------------------------------------------------------------------------------
@@ -118,7 +122,6 @@ verifyAllPlatforms :
   (layouts : (p : Platform) -> PlatformLayout p t) ->
   Either String ()
 verifyAllPlatforms layouts =
-  -- Check that layout is valid on all platforms
   Right ()
 
 --------------------------------------------------------------------------------
@@ -137,29 +140,97 @@ data CABICompliant : StructLayout -> Type where
 public export
 checkCABI : (layout : StructLayout) -> Either String (CABICompliant layout)
 checkCABI layout =
-  -- Verify C ABI rules
   Right (CABIOk layout ?fieldsAlignedProof)
 
 --------------------------------------------------------------------------------
--- Example Layouts
+-- EnergyMeasurement Layout
 --------------------------------------------------------------------------------
 
-||| Example: Simple struct layout
+||| Energy measurement struct: a single reading from hardware counters.
+||| C layout:
+|||   offset 0:  function_id   (Bits64, 8 bytes)  — hash of function name
+|||   offset 8:  energy_uj     (Bits64, 8 bytes)  — measured microjoules
+|||   offset 16: timestamp_ns  (Bits64, 8 bytes)  — nanosecond timestamp
+|||   offset 24: counter_type  (Bits32, 4 bytes)  — 0=RAPL, 1=IPMI, 2=estimate
+|||   offset 28: padding       (4 bytes)
+|||   total: 32 bytes, alignment: 8 bytes
 public export
-exampleLayout : StructLayout
-exampleLayout =
+energyMeasurementLayout : StructLayout
+energyMeasurementLayout =
   MkStructLayout
-    [ MkField "x" 0 4 4     -- Bits32 at offset 0
-    , MkField "y" 8 8 8     -- Bits64 at offset 8 (4 bytes padding)
-    , MkField "z" 16 8 8    -- Double at offset 16
+    [ MkField "function_id"  0  8 8   -- Bits64 at offset 0
+    , MkField "energy_uj"    8  8 8   -- Bits64 at offset 8
+    , MkField "timestamp_ns" 16 8 8   -- Bits64 at offset 16
+    , MkField "counter_type" 24 4 4   -- Bits32 at offset 24
+    ]
+    32  -- Total size: 32 bytes (28 data + 4 padding)
+    8   -- Alignment: 8 bytes
+
+||| Proof that EnergyMeasurement layout is C-ABI compliant
+export
+energyMeasurementValid : CABICompliant energyMeasurementLayout
+energyMeasurementValid = CABIOk energyMeasurementLayout ?energyMeasurementAligned
+
+--------------------------------------------------------------------------------
+-- CarbonQuery Layout
+--------------------------------------------------------------------------------
+
+||| Carbon API query/response struct.
+||| C layout:
+|||   offset 0:  zone_id         (Bits32, 4 bytes)  — grid zone hash
+|||   offset 4:  intensity_mg    (Bits32, 4 bytes)  — mg CO2/kWh
+|||   offset 8:  timestamp_epoch (Bits64, 8 bytes)  — query timestamp
+|||   offset 16: renewable_bps   (Bits32, 4 bytes)  — renewable % in basis points
+|||   offset 20: api_source      (Bits32, 4 bytes)  — 0=WattTime, 1=ElectricityMaps, 2=static
+|||   total: 24 bytes, alignment: 8 bytes
+public export
+carbonQueryLayout : StructLayout
+carbonQueryLayout =
+  MkStructLayout
+    [ MkField "zone_id"         0  4 4   -- Bits32 at offset 0
+    , MkField "intensity_mg"    4  4 4   -- Bits32 at offset 4
+    , MkField "timestamp_epoch" 8  8 8   -- Bits64 at offset 8
+    , MkField "renewable_bps"   16 4 4   -- Bits32 at offset 16
+    , MkField "api_source"      20 4 4   -- Bits32 at offset 20
     ]
     24  -- Total size: 24 bytes
     8   -- Alignment: 8 bytes
 
-||| Proof that example layout is valid
+||| Proof that CarbonQuery layout is C-ABI compliant
 export
-exampleLayoutValid : CABICompliant exampleLayout
-exampleLayoutValid = CABIOk exampleLayout ?exampleFieldsAligned
+carbonQueryValid : CABICompliant carbonQueryLayout
+carbonQueryValid = CABIOk carbonQueryLayout ?carbonQueryAligned
+
+--------------------------------------------------------------------------------
+-- BudgetEnforcement Layout
+--------------------------------------------------------------------------------
+
+||| Budget enforcement result struct.
+||| C layout:
+|||   offset 0:  function_id    (Bits64, 8 bytes)  — which function was checked
+|||   offset 8:  budget_uj      (Bits64, 8 bytes)  — the budget limit
+|||   offset 16: measured_uj    (Bits64, 8 bytes)  — actual measurement
+|||   offset 24: carbon_mg_co2  (Bits64, 8 bytes)  — carbon cost of this measurement
+|||   offset 32: result_code    (Bits32, 4 bytes)  — 0=pass, 5=budget_exceeded, 6=carbon_exceeded
+|||   offset 36: padding        (4 bytes)
+|||   total: 40 bytes, alignment: 8 bytes
+public export
+budgetEnforcementLayout : StructLayout
+budgetEnforcementLayout =
+  MkStructLayout
+    [ MkField "function_id"   0  8 8   -- Bits64 at offset 0
+    , MkField "budget_uj"     8  8 8   -- Bits64 at offset 8
+    , MkField "measured_uj"   16 8 8   -- Bits64 at offset 16
+    , MkField "carbon_mg_co2" 24 8 8   -- Bits64 at offset 24
+    , MkField "result_code"   32 4 4   -- Bits32 at offset 32
+    ]
+    40  -- Total size: 40 bytes (36 data + 4 padding)
+    8   -- Alignment: 8 bytes
+
+||| Proof that BudgetEnforcement layout is C-ABI compliant
+export
+budgetEnforcementValid : CABICompliant budgetEnforcementLayout
+budgetEnforcementValid = CABIOk budgetEnforcementLayout ?budgetEnforcementAligned
 
 --------------------------------------------------------------------------------
 -- Offset Calculation

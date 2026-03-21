@@ -1,19 +1,39 @@
-# ⚠️ STOP - CRITICAL READING REQUIRED
+# SPDX-License-Identifier: PMPL-1.0-or-later
+# Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
+
+# !! STOP - CRITICAL READING REQUIRED
 
 **THIS FILE MUST BE READ FIRST BY ALL AI AGENTS**
 
 ## WHAT IS THIS?
 
-This is the AI manifest for **[YOUR-REPO-NAME]**. It declares:
+This is the AI manifest for **eclexiaiser**. It declares:
 - Canonical file locations (where things MUST be, and nowhere else)
 - Critical invariants (rules that must NEVER be violated)
 - Repository structure and organization
+
+## PROJECT IDENTITY
+
+**eclexiaiser** adds energy, carbon, and resource-cost awareness to existing
+software via Eclexia economics-as-code. It instruments code with energy
+measurement hooks, generates Eclexia constraint annotations (@requires energy,
+@provides carbon_report), and formally verifies resource bounds using Idris2
+dependent types.
+
+**Key domain concepts:**
+- EnergyBudget: per-function energy limit in microjoules, proven satisfiable
+- CarbonIntensity: grams CO2/kWh from grid APIs (WattTime, Electricity Maps)
+- JouleAnnotation: type-level energy annotation for instrumented functions
+- ResourceBound: composite bound (energy + carbon + time + memory)
+- SustainabilityReport: aggregated metrics with EU CSRD field mapping
+
+**Part of:** the hyperpolymath -iser family (https://github.com/hyperpolymath/iseriser)
 
 ## CANONICAL LOCATIONS (UNIVERSAL RULE)
 
 ### Machine-Readable Metadata: `.machine_readable/` ONLY
 
-These 6 a2ml files MUST exist in `.machine_readable/` directory ONLY:
+These 6 a2ml files MUST exist in `.machine_readable/6a2/` directory ONLY:
 1. **STATE.a2ml** - Project state, progress, blockers
 2. **META.a2ml** - Architecture decisions, governance
 3. **ECOSYSTEM.a2ml** - Position in ecosystem, relationships
@@ -55,7 +75,7 @@ Policy enforcement contracts (k9, dust, lust, must, trust).
 ### AI Configuration & Guides: `.machine_readable/ai/` ONLY
 
 - `AI.a2ml` - Language-specific or LLM-specific patterns
-- `PLACEHOLDERS.md` - Bootstrap guide
+- `PLACEHOLDERS.adoc` - Bootstrap guide
 
 ### Community & Forge Metadata: `.github/` ONLY
 
@@ -80,42 +100,56 @@ Policy enforcement contracts (k9, dust, lust, must, trust).
 6. **Container images** - MUST use Chainguard base (`cgr.dev/chainguard/wolfi-base:latest` or `cgr.dev/chainguard/static:latest`)
 7. **Container runtime** - Podman, never Docker. Files are `Containerfile`, never `Dockerfile`
 8. **Container orchestration** - `selur-compose`, never `docker-compose`
+9. **Energy units** - Microjoules (uJ) at ABI boundary; never floating-point joules
+10. **Carbon units** - Milligrams CO2/kWh at ABI boundary; never floating-point grams
 
 ## REPOSITORY STRUCTURE
 
 This repo follows the **Dual-Track** architecture:
 
 ```
-[YOUR-REPO-NAME]/
+eclexiaiser/
 ├── 0-AI-MANIFEST.a2ml         # THIS FILE (start here)
 ├── README.adoc                 # High-level orientation (Rich Human)
-├── ROADMAP.adoc                # Future direction
+├── ROADMAP.adoc                # Phase 0-6 roadmap
+├── TOPOLOGY.md                 # Module map and data flow
 ├── CONTRIBUTING.adoc           # Human contribution guide
 ├── GOVERNANCE.adoc             # Decision-making model
 ├── Justfile                    # Task runner
+├── Cargo.toml                  # Rust CLI build
 ├── Containerfile               # OCI build
-├── LICENSE                     # Primary license
+├── LICENSE                     # PMPL-1.0-or-later
 ├── src/                        # Source code
+│   ├── main.rs                 # CLI entry point (clap)
+│   ├── lib.rs                  # Library re-exports
+│   ├── manifest/               # eclexiaiser.toml parser
+│   ├── codegen/                # Eclexia annotation codegen
+│   ├── abi/                    # Rust-side ABI module
 │   └── interface/              # Verified Interface Seams
-│       ├── abi/                # Idris2 ABI (The Spec)
-│       ├── ffi/                # Zig FFI (The Bridge)
-│       └── generated/          # C Headers (The Result)
+│       ├── abi/                # Idris2 ABI (Types, Layout, Foreign)
+│       ├── ffi/                # Zig FFI (energy measurement, carbon API)
+│       └── generated/          # Auto-generated C headers
 ├── container/                  # Stapeln container ecosystem
-├── docs/                       # Technical depths
-│   ├── attribution/            # Citations, owners, maintainers (adoc)
-│   ├── architecture/           # Topology, diagrams
-│   ├── theory/                 # Domain theory
-│   └── practice/               # Manuals
-├── docs/legal/                  # Legal exhibits and full texts
+├── docs/                       # Technical docs, reports, standards
+├── examples/                   # Example manifests
+├── features/                   # BDD feature specs
+├── tests/                      # Integration tests
+├── verification/               # Formal verification artefacts
 └── .machine_readable/          # ALL machine-readable metadata
+    └── 6a2/                    # STATE, META, ECOSYSTEM, AGENTIC, NEUROSYM, PLAYBOOK
 ```
 
 ## SESSION STARTUP CHECKLIST
 
-✅ Read THIS file (0-AI-MANIFEST.a2ml) first
-✅ Understand canonical location: `.machine_readable/`
-✅ State understanding of canonical locations
+1. Read THIS file (0-AI-MANIFEST.a2ml) first
+2. Understand canonical location: `.machine_readable/`
+3. Read `.machine_readable/6a2/STATE.a2ml` for current progress
+4. Note: energy units are microjoules, carbon units are mg CO2/kWh
 
 ## ATTESTATION PROOF
 
-**"I have read the AI manifest. All machine-readable content (state files, anchors, policies, bot directives, contractiles, AI guides) is located in `.machine_readable/` ONLY, and community metadata is in `.github/`. I will not create duplicate files in the root directory."**
+**"I have read the AI manifest for eclexiaiser. All machine-readable content
+(state files, anchors, policies, bot directives, contractiles, AI guides) is
+located in `.machine_readable/` ONLY, and community metadata is in `.github/`.
+I will not create duplicate files in the root directory. Energy values use
+microjoules, carbon values use milligrams CO2/kWh."**

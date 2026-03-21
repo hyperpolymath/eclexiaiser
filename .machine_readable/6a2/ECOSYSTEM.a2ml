@@ -6,18 +6,22 @@
   (version "0.1.0")
   (name "eclexiaiser")
   (type "tool")
-  (purpose "Add energy/carbon/resource-cost awareness via Eclexia")
+  (purpose "Add energy, carbon, and resource-cost awareness to existing software via Eclexia economics-as-code")
 
   (position-in-ecosystem
     (family "-iser acceleration frameworks")
     (meta-framework "iseriser")
     (relationship "sibling")
+    (domain "sustainability, green computing, carbon-aware software")
     (top-3 ("typedqliser" "chapeliser" "verisimiser")))
 
   (related-projects
     (project "iseriser"
       (relationship "meta-framework")
       (description "Generates new -iser project scaffolding"))
+    (project "eclexia"
+      (relationship "target-language")
+      (description "Economics-as-code language with @requires/@provides resource constraints"))
     (project "typedqliser"
       (relationship "sibling-priority-1")
       (description "Formal type safety for any query language"))
@@ -27,12 +31,18 @@
     (project "verisimiser"
       (relationship "sibling-priority-3")
       (description "VeriSimDB octad database augmentation"))
-    (project "squeakwell"
-      (relationship "sibling")
-      (description "Database recovery via constraint propagation"))
     (project "proven"
       (relationship "dependency")
-      (description "Shared Idris2 verified library"))
+      (description "Shared Idris2 verified library — resource bound proofs will use proven primitives"))
     (project "typell"
       (relationship "dependency")
-      (description "Type theory engine"))))
+      (description "Type theory engine — used for constraint solving on resource bounds"))
+    (project "panll"
+      (relationship "consumer")
+      (description "Panel system — eclexiaiser provides real-time energy dashboard panel"))
+    (project "boj-server"
+      (relationship "consumer")
+      (description "BoJ cartridge for remote energy analysis"))
+    (project "verisimdb"
+      (relationship "consumer")
+      (description "Historical energy measurement storage"))))
