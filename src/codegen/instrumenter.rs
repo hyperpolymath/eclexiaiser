@@ -135,10 +135,7 @@ fn generate_function_wrapper(code: &mut String, func: &ParsedFunctionBudget) {
         "\n/// Energy-instrumented wrapper for `{}`.\n",
         func.name
     ));
-    code.push_str(&format!(
-        "/// Source: {}\n",
-        func.source
-    ));
+    code.push_str(&format!("/// Source: {}\n", func.source));
     code.push_str(&format!(
         "pub fn measure_{safe_name}<F, R>(f: F) -> (R, Measurement)\n"
     ));
@@ -161,18 +158,12 @@ fn generate_function_wrapper(code: &mut String, func: &ParsedFunctionBudget) {
     };
 
     let energy_exceeded = if func.energy_budget.is_some() {
-        format!(
-            "energy_mj > {}_ENERGY_BUDGET_MJ",
-            safe_name.to_uppercase()
-        )
+        format!("energy_mj > {}_ENERGY_BUDGET_MJ", safe_name.to_uppercase())
     } else {
         "false".to_string()
     };
     let carbon_exceeded = if func.carbon_budget.is_some() {
-        format!(
-            "carbon_mg > {}_CARBON_BUDGET_MG",
-            safe_name.to_uppercase()
-        )
+        format!("carbon_mg > {}_CARBON_BUDGET_MG", safe_name.to_uppercase())
     } else {
         "false".to_string()
     };
@@ -238,10 +229,7 @@ pub fn generate_constraints(
             ));
         }
         if let Some(ref budget) = func.carbon_budget {
-            ecl.push_str(&format!(
-                "  (carbon-bound-mg {:.1})\n",
-                budget.max_mg_co2
-            ));
+            ecl.push_str(&format!("  (carbon-bound-mg {:.1})\n", budget.max_mg_co2));
         }
 
         ecl.push_str("  (enforcement strict))\n\n");
@@ -253,9 +241,7 @@ pub fn generate_constraints(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::abi::{
-        CarbonConfig, CarbonProvider, FunctionBudget, ReportConfig, ReportFormat,
-    };
+    use crate::abi::{CarbonConfig, CarbonProvider, FunctionBudget, ReportConfig, ReportFormat};
     use crate::codegen::parser::parse_function_budgets;
     use crate::manifest::{Manifest, ProjectConfig};
 

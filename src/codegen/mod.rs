@@ -84,10 +84,7 @@ pub fn build(manifest: &Manifest, _release: bool) -> Result<()> {
 /// energy measurement hooks active, collecting real measurements and
 /// producing a live sustainability report.
 pub fn run(manifest: &Manifest, _args: &[String]) -> Result<()> {
-    println!(
-        "Running eclexiaiser workload: {}",
-        manifest.project.name
-    );
+    println!("Running eclexiaiser workload: {}", manifest.project.name);
     println!("  [note] Live measurement integration planned for Phase 2");
     Ok(())
 }

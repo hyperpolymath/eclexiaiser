@@ -8,7 +8,7 @@
 // any code is generated, catching issues like missing sources, invalid budget
 // ranges, and conflicting annotations early.
 
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 
 use crate::abi::{CarbonBudget, EnergyBudget, FunctionBudget};
 
@@ -73,25 +73,25 @@ fn parse_single_function(func: &FunctionBudget) -> Result<ParsedFunctionBudget> 
     }
 
     // Validate energy budget if present.
-    if let Some(energy) = func.energy_budget_mj {
-        if energy < 0.0 {
-            bail!(
-                "Function '{}' has invalid energy budget: {} mJ (must be >= 0)",
-                name,
-                energy
-            );
-        }
+    if let Some(energy) = func.energy_budget_mj
+        && energy < 0.0
+    {
+        bail!(
+            "Function '{}' has invalid energy budget: {} mJ (must be >= 0)",
+            name,
+            energy
+        );
     }
 
     // Validate carbon budget if present.
-    if let Some(carbon) = func.carbon_budget_mg {
-        if carbon < 0.0 {
-            bail!(
-                "Function '{}' has invalid carbon budget: {} mg CO2 (must be >= 0)",
-                name,
-                carbon
-            );
-        }
+    if let Some(carbon) = func.carbon_budget_mg
+        && carbon < 0.0
+    {
+        bail!(
+            "Function '{}' has invalid carbon budget: {} mg CO2 (must be >= 0)",
+            name,
+            carbon
+        );
     }
 
     // At least one budget should be specified (warn-worthy but not fatal for Phase 1).

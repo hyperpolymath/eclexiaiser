@@ -145,7 +145,10 @@ fn test_manifest_validation_rejects_invalid() {
 #[test]
 fn test_budget_compliance_logic() {
     let energy = EnergyBudget::new(100.0);
-    assert!(!energy.is_exceeded_by(100.0), "Equal to budget = not exceeded");
+    assert!(
+        !energy.is_exceeded_by(100.0),
+        "Equal to budget = not exceeded"
+    );
     assert!(energy.is_exceeded_by(100.001), "Above budget = exceeded");
     assert!(
         (energy.usage_percent(75.0) - 75.0).abs() < f64::EPSILON,
@@ -157,9 +160,18 @@ fn test_budget_compliance_logic() {
     assert!(carbon.is_exceeded_by(20.001));
 
     // Compliance status thresholds.
-    assert_eq!(ComplianceStatus::from_usage_percent(50.0), ComplianceStatus::Compliant);
-    assert_eq!(ComplianceStatus::from_usage_percent(85.0), ComplianceStatus::Warning);
-    assert_eq!(ComplianceStatus::from_usage_percent(101.0), ComplianceStatus::Exceeded);
+    assert_eq!(
+        ComplianceStatus::from_usage_percent(50.0),
+        ComplianceStatus::Compliant
+    );
+    assert_eq!(
+        ComplianceStatus::from_usage_percent(85.0),
+        ComplianceStatus::Warning
+    );
+    assert_eq!(
+        ComplianceStatus::from_usage_percent(101.0),
+        ComplianceStatus::Exceeded
+    );
 }
 
 /// Test 4: Sustainability report generation with simulated measurements.
@@ -182,8 +194,14 @@ fn test_simulated_report_compliance() {
     let report = eclexiaiser::codegen::generate_report_from_simulated(&m, 1.5)
         .expect("Should generate 150% report");
     assert!(!report.all_compliant, "150% usage should not be compliant");
-    assert!(report.energy_violations() > 0, "Should have energy violations");
-    assert!(!report.recommendations.is_empty(), "Should generate recommendations");
+    assert!(
+        report.energy_violations() > 0,
+        "Should have energy violations"
+    );
+    assert!(
+        !report.recommendations.is_empty(),
+        "Should generate recommendations"
+    );
 }
 
 /// Test 5: Instrumentation code generation produces valid Rust syntax.
@@ -199,16 +217,34 @@ fn test_instrumentation_code_content() {
         .expect("Should generate instrumentation");
 
     // Should contain wrapper functions.
-    assert!(code.contains("pub fn measure_process_batch"), "Missing process_batch wrapper");
-    assert!(code.contains("pub fn measure_render_page"), "Missing render_page wrapper");
+    assert!(
+        code.contains("pub fn measure_process_batch"),
+        "Missing process_batch wrapper"
+    );
+    assert!(
+        code.contains("pub fn measure_render_page"),
+        "Missing render_page wrapper"
+    );
 
     // Should contain budget constants.
-    assert!(code.contains("PROCESS_BATCH_ENERGY_BUDGET_MJ"), "Missing energy budget constant");
-    assert!(code.contains("PROCESS_BATCH_CARBON_BUDGET_MG"), "Missing carbon budget constant");
+    assert!(
+        code.contains("PROCESS_BATCH_ENERGY_BUDGET_MJ"),
+        "Missing energy budget constant"
+    );
+    assert!(
+        code.contains("PROCESS_BATCH_CARBON_BUDGET_MG"),
+        "Missing carbon budget constant"
+    );
 
     // Should contain the energy measurement helper.
-    assert!(code.contains("pub fn measure_energy"), "Missing measure_energy helper");
-    assert!(code.contains("pub fn estimate_carbon_mg"), "Missing estimate_carbon_mg helper");
+    assert!(
+        code.contains("pub fn measure_energy"),
+        "Missing measure_energy helper"
+    );
+    assert!(
+        code.contains("pub fn estimate_carbon_mg"),
+        "Missing estimate_carbon_mg helper"
+    );
 
     // Should contain carbon intensity from manifest.
     assert!(code.contains("200.0"), "Missing carbon intensity value");
@@ -227,16 +263,37 @@ fn test_constraint_file_content() {
         .expect("Should generate constraints");
 
     // Should contain carbon config.
-    assert!(ecl.contains("(carbon-config"), "Missing carbon-config block");
+    assert!(
+        ecl.contains("(carbon-config"),
+        "Missing carbon-config block"
+    );
     assert!(ecl.contains("(region \"GB\")"), "Missing region");
-    assert!(ecl.contains("(intensity-mg-per-kwh 200.0)"), "Missing intensity");
+    assert!(
+        ecl.contains("(intensity-mg-per-kwh 200.0)"),
+        "Missing intensity"
+    );
 
     // Should contain function constraints.
-    assert!(ecl.contains("(define-constraint process_batch"), "Missing process_batch constraint");
-    assert!(ecl.contains("(energy-bound-mj 50.0)"), "Missing energy bound");
-    assert!(ecl.contains("(carbon-bound-mg 10.0)"), "Missing carbon bound");
-    assert!(ecl.contains("(define-constraint render_page"), "Missing render_page constraint");
-    assert!(ecl.contains("(enforcement strict)"), "Missing enforcement mode");
+    assert!(
+        ecl.contains("(define-constraint process_batch"),
+        "Missing process_batch constraint"
+    );
+    assert!(
+        ecl.contains("(energy-bound-mj 50.0)"),
+        "Missing energy bound"
+    );
+    assert!(
+        ecl.contains("(carbon-bound-mg 10.0)"),
+        "Missing carbon bound"
+    );
+    assert!(
+        ecl.contains("(define-constraint render_page"),
+        "Missing render_page constraint"
+    );
+    assert!(
+        ecl.contains("(enforcement strict)"),
+        "Missing enforcement mode"
+    );
 }
 
 /// Test 7: JSON report format serialization.
@@ -253,12 +310,8 @@ fn test_json_report_format() {
 
     let tmp = TempDir::new().expect("Should create temp dir");
     let base_path = tmp.path().join("report");
-    eclexiaiser::codegen::reporter::write_report(
-        &report,
-        &m.report,
-        base_path.to_str().unwrap(),
-    )
-    .expect("Should write JSON report");
+    eclexiaiser::codegen::reporter::write_report(&report, &m.report, base_path.to_str().unwrap())
+        .expect("Should write JSON report");
 
     let json_path = tmp.path().join("report.json");
     assert!(json_path.exists(), "JSON report file should exist");
@@ -285,22 +338,30 @@ fn test_csrd_report_format() {
 
     let tmp = TempDir::new().expect("Should create temp dir");
     let base_path = tmp.path().join("csrd_report");
-    eclexiaiser::codegen::reporter::write_report(
-        &report,
-        &m.report,
-        base_path.to_str().unwrap(),
-    )
-    .expect("Should write CSRD report");
+    eclexiaiser::codegen::reporter::write_report(&report, &m.report, base_path.to_str().unwrap())
+        .expect("Should write CSRD report");
 
     let csrd_path = tmp.path().join("csrd_report.csrd.txt");
     assert!(csrd_path.exists(), "CSRD report file should exist");
 
     let content = std::fs::read_to_string(&csrd_path).expect("Should read CSRD report");
-    assert!(content.contains("EU CSRD Sustainability Disclosure"), "Missing CSRD header");
+    assert!(
+        content.contains("EU CSRD Sustainability Disclosure"),
+        "Missing CSRD header"
+    );
     assert!(content.contains("ESRS E1"), "Missing ESRS E1 reference");
-    assert!(content.contains("SCOPE 2 EMISSIONS"), "Missing scope 2 section");
-    assert!(content.contains("COMPLIANCE STATUS"), "Missing compliance section");
-    assert!(content.contains("CORRECTIVE ACTIONS"), "Should have corrective actions at 120% usage");
+    assert!(
+        content.contains("SCOPE 2 EMISSIONS"),
+        "Missing scope 2 section"
+    );
+    assert!(
+        content.contains("COMPLIANCE STATUS"),
+        "Missing compliance section"
+    );
+    assert!(
+        content.contains("CORRECTIVE ACTIONS"),
+        "Should have corrective actions at 120% usage"
+    );
 }
 
 /// Test 9: Carbon estimation accuracy.

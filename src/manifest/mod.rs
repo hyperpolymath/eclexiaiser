@@ -80,8 +80,8 @@ fn default_report_config() -> ReportConfig {
 ///
 /// Returns a fully parsed `Manifest` or an error with context about what failed.
 pub fn load_manifest(path: &str) -> Result<Manifest> {
-    let content =
-        std::fs::read_to_string(path).with_context(|| format!("Failed to read manifest: {path}"))?;
+    let content = std::fs::read_to_string(path)
+        .with_context(|| format!("Failed to read manifest: {path}"))?;
     parse_manifest(&content).with_context(|| format!("Failed to parse manifest: {path}"))
 }
 
@@ -124,27 +124,26 @@ pub fn validate(manifest: &Manifest) -> Result<()> {
         if !seen_names.insert(&func.name) {
             anyhow::bail!("Duplicate function name: '{}'", func.name);
         }
-        if let Some(energy) = func.energy_budget_mj {
-            if energy < 0.0 {
-                anyhow::bail!(
-                    "Function '{}' has negative energy budget: {energy}",
-                    func.name
-                );
-            }
+        if let Some(energy) = func.energy_budget_mj
+            && energy < 0.0
+        {
+            anyhow::bail!(
+                "Function '{}' has negative energy budget: {energy}",
+                func.name
+            );
         }
-        if let Some(carbon) = func.carbon_budget_mg {
-            if carbon < 0.0 {
-                anyhow::bail!(
-                    "Function '{}' has negative carbon budget: {carbon}",
-                    func.name
-                );
-            }
+        if let Some(carbon) = func.carbon_budget_mg
+            && carbon < 0.0
+        {
+            anyhow::bail!(
+                "Function '{}' has negative carbon budget: {carbon}",
+                func.name
+            );
         }
     }
 
     // Validate carbon config: static provider needs positive intensity.
-    if manifest.carbon.provider == CarbonProvider::Static
-        && manifest.carbon.static_intensity <= 0.0
+    if manifest.carbon.provider == CarbonProvider::Static && manifest.carbon.static_intensity <= 0.0
     {
         anyhow::bail!(
             "Carbon provider 'static' requires a positive static-intensity value, got: {}",
@@ -228,7 +227,10 @@ pub fn print_info(manifest: &Manifest) {
             .carbon_budget_mg
             .map(|v| format!("{v} mg CO2"))
             .unwrap_or_else(|| "unbounded".to_string());
-        println!("  {} ({}) — energy: {energy}, carbon: {carbon}", func.name, func.source);
+        println!(
+            "  {} ({}) — energy: {energy}, carbon: {carbon}",
+            func.name, func.source
+        );
     }
 }
 
