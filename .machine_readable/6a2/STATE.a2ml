@@ -5,7 +5,7 @@
 (state
   (metadata
     (version "0.1.0")
-    (last-updated "2026-03-21")
+    (last-updated "2026-04-04")
     (author "Jonathan D.A. Jewell"))
 
   (project-context
@@ -17,8 +17,12 @@
 
   (current-position
     (phase "phase-1-complete")
-    (completion-percentage 45)
-    (milestone "Phase 1: scaffold, bespoke ABI/FFI, CLI, manifest parser, codegen stubs, RSR compliance, documentation — all complete"))
+    (completion-percentage 50)
+    (milestone "Phase 1: scaffold, bespoke ABI/FFI, CLI, manifest parser, codegen stubs, RSR compliance, documentation — all complete")
+    (deployment-status
+      (deployed-to "40+ sub-service repos")
+      (integration-count "105 dogfood-gate eclexiaiser-validate jobs across fleet")
+      (dogfooding "Active in session 9 blitz")))
 
   (route-to-mvp
     (step 1 "DONE — Project scaffold from rsr-template-repo")
@@ -35,6 +39,14 @@
     (step 12 "End-to-end integration tests with real inputs")
     (step 13 "BoJ cartridge and PanLL panel integration")
     (step 14 "Performance benchmarks and optimisation"))
+
+  (session-history
+    (snapshot "2026-04-04"
+      (accomplishments
+        ("Session 9 dogfooding blitz: Deployed eclexiaiser-validate to 40+ sub-service repos")
+        ("105 dogfood-gate jobs active across the hyperpolymath fleet")
+        ("Completion bumped from 45% → 50% (fleet deployment + dogfooding verification)")
+        ("Proving eclexiaiser core design across production -iser family cohort"))))
 
   (blockers-and-issues
     (none "Phase 1 complete — no blockers. Phase 2 requires domain logic implementation."))
