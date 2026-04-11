@@ -1,48 +1,20 @@
-;; SPDX-License-Identifier: PMPL-1.0-or-later
-;; Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
-;; ECOSYSTEM.a2ml — Ecosystem position for eclexiaiser
+# SPDX-License-Identifier: PMPL-1.0-or-later
+# Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
+#
+# ECOSYSTEM.a2ml — Eclexiaiser ecosystem position
+[metadata]
+version = "0.1.0"
+last-updated = "2026-04-11"
 
-(ecosystem
-  (version "0.1.0")
-  (name "eclexiaiser")
-  (type "tool")
-  (purpose "Add energy, carbon, and resource-cost awareness to existing software via Eclexia economics-as-code")
+[project]
+name = "Eclexiaiser"
+purpose = "Add energy, carbon, and resource-cost awareness to existing software via Eclexia economics-as-code"
+role = "tool"
 
-  (position-in-ecosystem
-    (family "-iser acceleration frameworks")
-    (meta-framework "iseriser")
-    (relationship "sibling")
-    (domain "sustainability, green computing, carbon-aware software")
-    (top-3 ("typedqliser" "chapeliser" "verisimiser")))
+[position-in-ecosystem]
+category = ""
 
-  (related-projects
-    (project "iseriser"
-      (relationship "meta-framework")
-      (description "Generates new -iser project scaffolding"))
-    (project "eclexia"
-      (relationship "target-language")
-      (description "Economics-as-code language with @requires/@provides resource constraints"))
-    (project "typedqliser"
-      (relationship "sibling-priority-1")
-      (description "Formal type safety for any query language"))
-    (project "chapeliser"
-      (relationship "sibling-priority-2")
-      (description "Chapel distributed computing acceleration"))
-    (project "verisimiser"
-      (relationship "sibling-priority-3")
-      (description "VeriSimDB octad database augmentation"))
-    (project "proven"
-      (relationship "dependency")
-      (description "Shared Idris2 verified library — resource bound proofs will use proven primitives"))
-    (project "typell"
-      (relationship "dependency")
-      (description "Type theory engine — used for constraint solving on resource bounds"))
-    (project "panll"
-      (relationship "consumer")
-      (description "Panel system — eclexiaiser provides real-time energy dashboard panel"))
-    (project "boj-server"
-      (relationship "consumer")
-      (description "BoJ cartridge for remote energy analysis"))
-    (project "verisimdb"
-      (relationship "consumer")
-      (description "Historical energy measurement storage"))))
+[related-projects]
+projects = [
+  # No related projects recorded
+]

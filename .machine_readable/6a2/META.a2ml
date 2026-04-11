@@ -1,61 +1,27 @@
-;; SPDX-License-Identifier: PMPL-1.0-or-later
-;; Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
-;; META.a2ml — Meta-level information for eclexiaiser
+# SPDX-License-Identifier: PMPL-1.0-or-later
+# Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
+#
+# META.a2ml — Eclexiaiser meta-level information
+[metadata]
+version = "0.1.0"
+last-updated = "2026-03-21"
 
-(meta
-  (version "0.1.0")
-  (last-updated "2026-03-21")
+[project-info]
+license = "PMPL-1.0-or-later"
+author = "Jonathan D.A. Jewell (hyperpolymath)"
 
-  (architecture-decisions
-    (adr "001-iser-pattern"
-      (status "accepted")
-      (context "Need to make Eclexia sustainability features accessible without learning a new language")
-      (decision "Use manifest-driven code generation: user describes energy budgets in TOML, tool generates Eclexia constraints and measurement hooks")
-      (consequences "Users write zero Eclexia code; all complexity in eclexiaiser"))
+[architecture-decisions]
+decisions = [
+  # No ADRs recorded
+]
 
-    (adr "002-abi-ffi-standard"
-      (status "accepted")
-      (context "Need verified interop between Rust CLI, energy measurement hardware, and carbon APIs")
-      (decision "Idris2 ABI for formal proofs of resource bounds, Zig FFI for hardware counter access and C-ABI bridge")
-      (consequences "Compile-time correctness guarantees for energy budgets; zero runtime overhead from proofs"))
+[development-practices]
+versioning = "SemVer"
+documentation = "AsciiDoc"
+build-tool = "just"
 
-    (adr "003-microjoule-units"
-      (status "accepted")
-      (context "Floating-point energy values cause rounding errors that compound across call chains")
-      (decision "Use microjoules (uJ) as the canonical unit at the ABI boundary; milligrams CO2/kWh for carbon")
-      (consequences "Integer arithmetic throughout the measurement and enforcement path; no floating-point at FFI boundary"))
-
-    (adr "004-carbon-api-providers"
-      (status "accepted")
-      (context "Need real-time carbon intensity data for renewable-aware scheduling")
-      (decision "Support WattTime, Electricity Maps, and static data as carbon API providers; configurable per zone in manifest")
-      (consequences "Caching layer needed to avoid API rate limits; static fallback for offline/CI use"))
-
-    (adr "005-csrd-reporting"
-      (status "accepted")
-      (context "EU Corporate Sustainability Reporting Directive requires energy and emissions data from software operations")
-      (decision "Generate sustainability reports with CSRD-compatible field mapping from accumulated measurements")
-      (consequences "Report struct must include: total energy, total carbon, renewable percentage, measurement count"))
-
-    (adr "006-rsr-template"
-      (status "accepted")
-      (context "Need consistent project structure across 29+ -iser repos")
-      (decision "All repos cloned from rsr-template-repo with full CI/CD and governance")
-      (consequences "17 workflows, SECURITY.md, CONTRIBUTING, bot directives from day one")))
-
-  (development-practices
-    (language "Rust" (purpose "CLI orchestration, manifest parsing, codegen"))
-    (language "Idris2" (purpose "ABI formal proofs of energy budget satisfiability and composition"))
-    (language "Zig" (purpose "FFI C-ABI bridge for RAPL/IPMI energy counters and carbon API"))
-    (build-tool "cargo")
-    (ci "GitHub Actions (17 workflows)"))
-
-  (design-rationale
-    (principle "Manifest-driven"
-      (explanation "User describes energy budgets and carbon limits in eclexiaiser.toml; tool generates all measurement and enforcement code"))
-    (principle "Formally verified resource bounds"
-      (explanation "Idris2 dependent types prove energy budgets compose correctly across call chains and are satisfiable"))
-    (principle "Hardware-level measurement"
-      (explanation "Zig FFI reads RAPL/IPMI hardware counters for accurate energy data; software estimation as fallback"))
-    (principle "Carbon-aware by default"
-      (explanation "Every energy measurement is paired with grid carbon intensity data, enabling renewable-aware scheduling"))))
+[maintenance-axes]
+scoping-first = true
+axis-1 = "must > intend > like"
+axis-2 = "corrective > adaptive > perfective"
+axis-3 = "systems > compliance > effects"
