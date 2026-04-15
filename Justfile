@@ -2,6 +2,8 @@
 # eclexiaiser — energy/carbon/resource-cost awareness via Eclexia
 
 # Default: build and test
+import? "contractile.just"
+
 default: build test
 
 # Build release binary
