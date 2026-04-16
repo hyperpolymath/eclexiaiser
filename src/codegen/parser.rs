@@ -115,7 +115,7 @@ fn is_valid_identifier(s: &str) -> bool {
     }
     // First character must be alphabetic or underscore.
     let mut chars = s.chars();
-    let first = chars.next().unwrap();
+    let first = chars.next().expect("TODO: handle error");
     if !first.is_alphabetic() && first != '_' {
         return false;
     }
@@ -141,7 +141,7 @@ mod tests {
             energy_budget_mj: Some(50.0),
             carbon_budget_mg: Some(10.0),
         }];
-        let parsed = parse_function_budgets(&funcs).unwrap();
+        let parsed = parse_function_budgets(&funcs).expect("TODO: handle error");
         assert_eq!(parsed.len(), 1);
         assert_eq!(parsed[0].name, "process_batch");
         assert!(parsed[0].energy_budget.is_some());
@@ -167,7 +167,7 @@ mod tests {
             energy_budget_mj: Some(10.0),
             carbon_budget_mg: None,
         }];
-        let parsed = parse_function_budgets(&funcs).unwrap();
+        let parsed = parse_function_budgets(&funcs).expect("TODO: handle error");
         assert_eq!(parsed[0].name, "module::process");
     }
 

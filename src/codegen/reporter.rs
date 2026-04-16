@@ -370,7 +370,7 @@ mod tests {
     #[test]
     fn test_report_template_has_zero_measurements() {
         let m = test_manifest();
-        let report = generate_report_template(&m).unwrap();
+        let report = generate_report_template(&m).expect("TODO: handle error");
         assert_eq!(report.project_name, "report-test");
         assert_eq!(report.measurements.len(), 2);
         assert_eq!(report.total_energy_mj, 0.0);
@@ -380,7 +380,7 @@ mod tests {
     #[test]
     fn test_simulated_report_compliant_at_50_percent() {
         let m = test_manifest();
-        let report = generate_simulated_report(&m, 0.5).unwrap();
+        let report = generate_simulated_report(&m, 0.5).expect("TODO: handle error");
         assert!(report.all_compliant);
         assert_eq!(report.energy_violations(), 0);
         // At 50% usage, fast_func should use 50 mJ out of 100 mJ budget.
@@ -390,7 +390,7 @@ mod tests {
     #[test]
     fn test_simulated_report_exceeded_at_150_percent() {
         let m = test_manifest();
-        let report = generate_simulated_report(&m, 1.5).unwrap();
+        let report = generate_simulated_report(&m, 1.5).expect("TODO: handle error");
         assert!(!report.all_compliant);
         assert!(report.energy_violations() > 0);
     }
@@ -398,7 +398,7 @@ mod tests {
     #[test]
     fn test_text_report_rendering() {
         let m = test_manifest();
-        let report = generate_simulated_report(&m, 0.7).unwrap();
+        let report = generate_simulated_report(&m, 0.7).expect("TODO: handle error");
         let text = render_text_report(&report);
         assert!(text.contains("Sustainability Report: report-test"));
         assert!(text.contains("fast_func"));
@@ -409,7 +409,7 @@ mod tests {
     #[test]
     fn test_csrd_report_rendering() {
         let m = test_manifest();
-        let report = generate_simulated_report(&m, 1.2).unwrap();
+        let report = generate_simulated_report(&m, 1.2).expect("TODO: handle error");
         let csrd = render_csrd_report(&report);
         assert!(csrd.contains("EU CSRD Sustainability Disclosure"));
         assert!(csrd.contains("ESRS E1"));
@@ -420,7 +420,7 @@ mod tests {
     #[test]
     fn test_recommendations_generated_for_exceeded() {
         let m = test_manifest();
-        let report = generate_simulated_report(&m, 1.5).unwrap();
+        let report = generate_simulated_report(&m, 1.5).expect("TODO: handle error");
         assert!(!report.recommendations.is_empty());
         // Should have recommendation about fast_func exceeding budget.
         assert!(

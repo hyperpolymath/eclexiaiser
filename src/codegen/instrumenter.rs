@@ -279,8 +279,8 @@ mod tests {
     #[test]
     fn test_generate_instrumentation_contains_wrappers() {
         let m = test_manifest();
-        let parsed = parse_function_budgets(&m.functions).unwrap();
-        let code = generate_instrumentation(&m, &parsed).unwrap();
+        let parsed = parse_function_budgets(&m.functions).expect("TODO: handle error");
+        let code = generate_instrumentation(&m, &parsed).expect("TODO: handle error");
 
         assert!(code.contains("measure_process_batch"));
         assert!(code.contains("measure_render_page"));
@@ -294,8 +294,8 @@ mod tests {
     #[test]
     fn test_generate_constraints_format() {
         let m = test_manifest();
-        let parsed = parse_function_budgets(&m.functions).unwrap();
-        let ecl = generate_constraints(&m, &parsed).unwrap();
+        let parsed = parse_function_budgets(&m.functions).expect("TODO: handle error");
+        let ecl = generate_constraints(&m, &parsed).expect("TODO: handle error");
 
         assert!(ecl.contains("(carbon-config"));
         assert!(ecl.contains("(region \"GB\")"));

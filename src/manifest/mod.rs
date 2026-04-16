@@ -262,7 +262,7 @@ include-recommendations = true
 
     #[test]
     fn test_parse_valid_manifest() {
-        let m = parse_manifest(sample_toml()).unwrap();
+        let m = parse_manifest(sample_toml()).expect("TODO: handle error");
         assert_eq!(m.project.name, "test-service");
         assert_eq!(m.functions.len(), 1);
         assert_eq!(m.functions[0].name, "do_work");
@@ -272,7 +272,7 @@ include-recommendations = true
 
     #[test]
     fn test_validate_empty_name() {
-        let mut m = parse_manifest(sample_toml()).unwrap();
+        let mut m = parse_manifest(sample_toml()).expect("TODO: handle error");
         m.project.name = "".to_string();
         assert!(validate(&m).is_err());
     }
@@ -292,13 +292,13 @@ static-intensity = 200.0
 format = "text"
 include-recommendations = false
 "#;
-        let m = parse_manifest(toml).unwrap();
+        let m = parse_manifest(toml).expect("TODO: handle error");
         assert!(validate(&m).is_err());
     }
 
     #[test]
     fn test_validate_negative_budget() {
-        let mut m = parse_manifest(sample_toml()).unwrap();
+        let mut m = parse_manifest(sample_toml()).expect("TODO: handle error");
         m.functions[0].energy_budget_mj = Some(-5.0);
         assert!(validate(&m).is_err());
     }
@@ -328,7 +328,7 @@ static-intensity = 200.0
 format = "text"
 include-recommendations = false
 "#;
-        let m = parse_manifest(toml).unwrap();
+        let m = parse_manifest(toml).expect("TODO: handle error");
         assert!(validate(&m).is_err());
     }
 }
