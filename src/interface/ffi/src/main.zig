@@ -247,6 +247,28 @@ export fn eclexiaiser_read_power_mw(raw_handle: ?*anyopaque) u64 {
     return estimatePowerMw();
 }
 
+/// Measure energy consumption for a handle, in microjoules.
+/// Matches the ABI declaration in Types.idr (namespace Foreign):
+///   %foreign "C:eclexiaiser_measure_energy"  : Bits64 -> PrimIO Bits64
+/// Returns the current counter reading (uJ), or 0 if no counter is available
+/// or the handle is null.
+export fn eclexiaiser_measure_energy(raw_handle: ?*anyopaque) u64 {
+    const handle = getHandle(raw_handle) orelse return 0;
+
+    if (!handle.initialized) {
+        setError("Handle not initialized");
+        return 0;
+    }
+
+    const reading = readEnergyCounter(handle.counter_type) orelse {
+        setError("Energy counter not available");
+        return 0;
+    };
+
+    clearError();
+    return reading;
+}
+
 //==============================================================================
 // Carbon Intensity API
 //==============================================================================
@@ -278,6 +300,14 @@ export fn eclexiaiser_query_renewable_pct(raw_handle: ?*anyopaque, zone_id: u32)
 
     // TODO: Implement real API query
     return getStaticRenewablePct(zone_id);
+}
+
+/// Query carbon intensity for a grid zone without a library handle.
+/// Matches the ABI declaration in Types.idr (namespace Foreign):
+///   %foreign "C:eclexiaiser_query_carbon"  : Bits32 -> PrimIO Bits32
+/// Returns milligrams CO2 per kWh from the static dataset.
+export fn eclexiaiser_query_carbon(zone_id: u32) u32 {
+    return getStaticCarbonIntensity(zone_id);
 }
 
 /// Set the carbon API provider.
@@ -313,6 +343,19 @@ export fn eclexiaiser_enforce_energy_budget(raw_handle: ?*anyopaque, budget_uj: 
         return .budget_exceeded;
     }
 
+    clearError();
+    return .ok;
+}
+
+/// Enforce an energy budget without a library handle.
+/// Matches the ABI declaration in Types.idr (namespace Foreign):
+///   %foreign "C:eclexiaiser_enforce_budget"  : Bits64 -> Bits64 -> PrimIO Bits32
+/// Returns .ok (0) if within budget, .budget_exceeded (5) otherwise.
+export fn eclexiaiser_enforce_budget(budget_uj: u64, measured_uj: u64) Result {
+    if (measured_uj > budget_uj) {
+        setError("Energy budget exceeded");
+        return .budget_exceeded;
+    }
     clearError();
     return .ok;
 }
@@ -638,4 +681,24 @@ test "struct layout sizes" {
     try std.testing.expectEqual(@as(usize, 24), @sizeOf(CarbonQuery));
     try std.testing.expectEqual(@as(usize, 40), @sizeOf(BudgetEnforcement));
     try std.testing.expectEqual(@as(usize, 40), @sizeOf(SustainabilityReport));
+}
+
+test "Types.idr Foreign: measure_energy and null handle" {
+    // Null handle must yield 0 (not a crash).
+    try std.testing.expectEqual(@as(u64, 0), eclexiaiser_measure_energy(null));
+
+    const raw_handle = eclexiaiser_init() orelse return error.InitFailed;
+    defer eclexiaiser_free(raw_handle);
+    // Estimate counter is always available, so a reading is produced.
+    try std.testing.expect(eclexiaiser_measure_energy(raw_handle) > 0);
+}
+
+test "Types.idr Foreign: query_carbon (handle-free)" {
+    try std.testing.expectEqual(@as(u32, 200_000), eclexiaiser_query_carbon(0x4742)); // GB
+    try std.testing.expectEqual(@as(u32, 20_000), eclexiaiser_query_carbon(0x4E4F)); // NO
+}
+
+test "Types.idr Foreign: enforce_budget (handle-free) result codes" {
+    try std.testing.expectEqual(Result.ok, eclexiaiser_enforce_budget(1000, 500));
+    try std.testing.expectEqual(Result.budget_exceeded, eclexiaiser_enforce_budget(500, 1000));
 }
