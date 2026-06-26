@@ -21,6 +21,7 @@ module Eclexiaiser.ABI.Types
 import Data.Bits
 import Data.So
 import Data.Vect
+import Decidable.Equality
 
 %default total
 
@@ -33,13 +34,11 @@ public export
 data Platform = Linux | Windows | MacOS | BSD | WASM
 
 ||| Compile-time platform detection
-||| This will be set during compilation based on target
+||| This will be set during compilation based on target.
+||| Defaults to Linux; override via codegen for other targets.
 public export
 thisPlatform : Platform
-thisPlatform =
-  %runElab do
-    -- Platform detection logic
-    pure Linux  -- Default, override with compiler flags
+thisPlatform = Linux
 
 --------------------------------------------------------------------------------
 -- Result Codes
@@ -89,7 +88,62 @@ DecEq Result where
   decEq BudgetExceeded BudgetExceeded = Yes Refl
   decEq CarbonLimitExceeded CarbonLimitExceeded = Yes Refl
   decEq CounterUnavailable CounterUnavailable = Yes Refl
-  decEq _ _ = No absurd
+  decEq Ok Error = No (\case Refl impossible)
+  decEq Ok InvalidParam = No (\case Refl impossible)
+  decEq Ok OutOfMemory = No (\case Refl impossible)
+  decEq Ok NullPointer = No (\case Refl impossible)
+  decEq Ok BudgetExceeded = No (\case Refl impossible)
+  decEq Ok CarbonLimitExceeded = No (\case Refl impossible)
+  decEq Ok CounterUnavailable = No (\case Refl impossible)
+  decEq Error Ok = No (\case Refl impossible)
+  decEq Error InvalidParam = No (\case Refl impossible)
+  decEq Error OutOfMemory = No (\case Refl impossible)
+  decEq Error NullPointer = No (\case Refl impossible)
+  decEq Error BudgetExceeded = No (\case Refl impossible)
+  decEq Error CarbonLimitExceeded = No (\case Refl impossible)
+  decEq Error CounterUnavailable = No (\case Refl impossible)
+  decEq InvalidParam Ok = No (\case Refl impossible)
+  decEq InvalidParam Error = No (\case Refl impossible)
+  decEq InvalidParam OutOfMemory = No (\case Refl impossible)
+  decEq InvalidParam NullPointer = No (\case Refl impossible)
+  decEq InvalidParam BudgetExceeded = No (\case Refl impossible)
+  decEq InvalidParam CarbonLimitExceeded = No (\case Refl impossible)
+  decEq InvalidParam CounterUnavailable = No (\case Refl impossible)
+  decEq OutOfMemory Ok = No (\case Refl impossible)
+  decEq OutOfMemory Error = No (\case Refl impossible)
+  decEq OutOfMemory InvalidParam = No (\case Refl impossible)
+  decEq OutOfMemory NullPointer = No (\case Refl impossible)
+  decEq OutOfMemory BudgetExceeded = No (\case Refl impossible)
+  decEq OutOfMemory CarbonLimitExceeded = No (\case Refl impossible)
+  decEq OutOfMemory CounterUnavailable = No (\case Refl impossible)
+  decEq NullPointer Ok = No (\case Refl impossible)
+  decEq NullPointer Error = No (\case Refl impossible)
+  decEq NullPointer InvalidParam = No (\case Refl impossible)
+  decEq NullPointer OutOfMemory = No (\case Refl impossible)
+  decEq NullPointer BudgetExceeded = No (\case Refl impossible)
+  decEq NullPointer CarbonLimitExceeded = No (\case Refl impossible)
+  decEq NullPointer CounterUnavailable = No (\case Refl impossible)
+  decEq BudgetExceeded Ok = No (\case Refl impossible)
+  decEq BudgetExceeded Error = No (\case Refl impossible)
+  decEq BudgetExceeded InvalidParam = No (\case Refl impossible)
+  decEq BudgetExceeded OutOfMemory = No (\case Refl impossible)
+  decEq BudgetExceeded NullPointer = No (\case Refl impossible)
+  decEq BudgetExceeded CarbonLimitExceeded = No (\case Refl impossible)
+  decEq BudgetExceeded CounterUnavailable = No (\case Refl impossible)
+  decEq CarbonLimitExceeded Ok = No (\case Refl impossible)
+  decEq CarbonLimitExceeded Error = No (\case Refl impossible)
+  decEq CarbonLimitExceeded InvalidParam = No (\case Refl impossible)
+  decEq CarbonLimitExceeded OutOfMemory = No (\case Refl impossible)
+  decEq CarbonLimitExceeded NullPointer = No (\case Refl impossible)
+  decEq CarbonLimitExceeded BudgetExceeded = No (\case Refl impossible)
+  decEq CarbonLimitExceeded CounterUnavailable = No (\case Refl impossible)
+  decEq CounterUnavailable Ok = No (\case Refl impossible)
+  decEq CounterUnavailable Error = No (\case Refl impossible)
+  decEq CounterUnavailable InvalidParam = No (\case Refl impossible)
+  decEq CounterUnavailable OutOfMemory = No (\case Refl impossible)
+  decEq CounterUnavailable NullPointer = No (\case Refl impossible)
+  decEq CounterUnavailable BudgetExceeded = No (\case Refl impossible)
+  decEq CounterUnavailable CarbonLimitExceeded = No (\case Refl impossible)
 
 --------------------------------------------------------------------------------
 -- Opaque Handles
@@ -105,8 +159,10 @@ data Handle : Type where
 ||| Returns Nothing if pointer is null
 public export
 createHandle : Bits64 -> Maybe Handle
-createHandle 0 = Nothing
-createHandle ptr = Just (MkHandle ptr)
+createHandle ptr =
+  case choose (ptr /= 0) of
+    Left ok => Just (MkHandle ptr {nonNull = ok})
+    Right _ => Nothing
 
 ||| Extract pointer value from handle
 public export
@@ -247,10 +303,15 @@ ptrSize MacOS = 64
 ptrSize BSD = 64
 ptrSize WASM = 32
 
-||| Pointer type for platform
+||| Pointer-sized unsigned integer type for a platform.
+||| 64-bit platforms use Bits64; 32-bit (WASM) uses Bits32.
 public export
 CPtr : Platform -> Type -> Type
-CPtr p _ = Bits (ptrSize p)
+CPtr Linux   _ = Bits64
+CPtr Windows _ = Bits64
+CPtr MacOS   _ = Bits64
+CPtr BSD     _ = Bits64
+CPtr WASM    _ = Bits32
 
 --------------------------------------------------------------------------------
 -- Memory Layout Proofs
@@ -266,21 +327,20 @@ public export
 data HasAlignment : Type -> Nat -> Type where
   AlignProof : {0 t : Type} -> {n : Nat} -> HasAlignment t n
 
-||| Size of C types (platform-specific)
+||| Size of C primitive types (platform-specific fallback for pointers).
+||| Note: CInt/CSize reduce to Bits32/Bits64, so they are covered by the
+||| primitive-type clauses below rather than by separate (unmatchable)
+||| type-level-application patterns.
 public export
 cSizeOf : (p : Platform) -> (t : Type) -> Nat
-cSizeOf p (CInt _) = 4
-cSizeOf p (CSize _) = if ptrSize p == 64 then 8 else 4
 cSizeOf p Bits32 = 4
 cSizeOf p Bits64 = 8
 cSizeOf p Double = 8
 cSizeOf p _ = ptrSize p `div` 8
 
-||| Alignment of C types (platform-specific)
+||| Alignment of C primitive types (platform-specific fallback for pointers).
 public export
 cAlignOf : (p : Platform) -> (t : Type) -> Nat
-cAlignOf p (CInt _) = 4
-cAlignOf p (CSize _) = if ptrSize p == 64 then 8 else 4
 cAlignOf p Bits32 = 4
 cAlignOf p Bits64 = 8
 cAlignOf p Double = 8
