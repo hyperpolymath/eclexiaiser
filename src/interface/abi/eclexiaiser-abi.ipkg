@@ -7,3 +7,4 @@ modules = Eclexiaiser.ABI.Types
         , Eclexiaiser.ABI.Layout
         , Eclexiaiser.ABI.Foreign
         , Eclexiaiser.ABI.Proofs
+        , Eclexiaiser.ABI.Semantics
