@@ -8,3 +8,4 @@ modules = Eclexiaiser.ABI.Types
         , Eclexiaiser.ABI.Foreign
         , Eclexiaiser.ABI.Proofs
         , Eclexiaiser.ABI.Semantics
+        , Eclexiaiser.ABI.Invariants
