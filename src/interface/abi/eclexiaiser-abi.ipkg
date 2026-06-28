@@ -10,3 +10,4 @@ modules = Eclexiaiser.ABI.Types
         , Eclexiaiser.ABI.Semantics
         , Eclexiaiser.ABI.Invariants
         , Eclexiaiser.ABI.FfiSeam
+        , Eclexiaiser.ABI.Capstone
