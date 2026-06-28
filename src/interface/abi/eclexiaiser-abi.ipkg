@@ -9,3 +9,4 @@ modules = Eclexiaiser.ABI.Types
         , Eclexiaiser.ABI.Proofs
         , Eclexiaiser.ABI.Semantics
         , Eclexiaiser.ABI.Invariants
+        , Eclexiaiser.ABI.FfiSeam
