@@ -16,7 +16,7 @@
 == Phase 1: Source Instrumentation
 * [ ] Parse target source files to identify function boundaries
 * [ ] Insert energy measurement hooks at function entry/exit
-* [ ] Support Rust, ReScript, and Gleam as initial target languages
+* [ ] Support Rust, AffineScript, and Gleam as initial target languages
 * [ ] Preserve source maps for accurate attribution
 * [ ] CLI `generate` subcommand produces instrumented source
 
