@@ -1,16 +1,15 @@
-<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
-<!-- Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk> -->
-# TOPOLOGY — eclexiaiser
+== TOPOLOGY — eclexiaiser
 
-## Purpose
+=== Purpose
 
-Energy, carbon, and resource-cost awareness for existing software via Eclexia
-economics-as-code. Instruments code with energy measurement hooks, generates
-Eclexia constraint annotations, and formally verifies resource bounds.
+Energy, carbon, and resource-cost awareness for existing software via
+Eclexia economics-as-code. Instruments code with energy measurement
+hooks, generates Eclexia constraint annotations, and formally verifies
+resource bounds.
 
-## Module Map
+=== Module Map
 
-```
+....
 eclexiaiser/
 ├── src/
 │   ├── main.rs                    # CLI entry point (clap subcommands)
@@ -61,11 +60,11 @@ eclexiaiser/
 │   ├── configs/                   # git-cliff, etc.
 │   └── anchors/                   # ANCHOR.a2ml
 └── .github/workflows/             # 17 RSR-standard workflows
-```
+....
 
-## Data Flow
+=== Data Flow
 
-```
+....
 eclexiaiser.toml
     │  (manifest: function names, energy budgets, carbon limits, grid zone)
     v
@@ -93,26 +92,40 @@ eclexiaiser.toml
 │                        │  Enforcement violations (compile-time or runtime)
 │                        │  Energy dashboard data (PanLL panel)
 └────────────────────────┘
-```
+....
 
-## Key Domain Types
+=== Key Domain Types
 
-| Type | Module | Purpose |
-|------|--------|---------|
-| `EnergyBudget` | Types.idr | Per-function energy limit in joules with satisfiability proof |
-| `CarbonIntensity` | Types.idr | gCO2/kWh from grid API, indexed by zone |
-| `JouleAnnotation` | Types.idr | Type-level energy annotation for a function |
-| `ResourceBound` | Types.idr | Composite bound (energy + carbon + time + memory) |
-| `SustainabilityReport` | Types.idr | Aggregated metrics with CSRD field mapping |
-| `EnergyMeasurement` | Layout.idr | C-compatible struct for hardware counter readings |
-| `CarbonQuery` | Layout.idr | C-compatible struct for carbon API request/response |
+[width="100%",cols="27%,34%,39%",options="header",]
+|===
+|Type |Module |Purpose
+|`+EnergyBudget+` |Types.idr |Per-function energy limit in joules with
+satisfiability proof
 
-## Integration Points
+|`+CarbonIntensity+` |Types.idr |gCO2/kWh from grid API, indexed by zone
 
-- **iseriser** — meta-framework that generated this scaffold
-- **proven** — shared Idris2 verification primitives
-- **typell** — type theory engine for constraint solving
-- **PanLL** — real-time energy dashboard panel
-- **BoJ-server** — remote energy analysis cartridge
-- **VeriSimDB** — historical energy measurement storage
-- **WattTime / Electricity Maps** — external carbon intensity APIs
+|`+JouleAnnotation+` |Types.idr |Type-level energy annotation for a
+function
+
+|`+ResourceBound+` |Types.idr |Composite bound (energy + carbon + time +
+memory)
+
+|`+SustainabilityReport+` |Types.idr |Aggregated metrics with CSRD field
+mapping
+
+|`+EnergyMeasurement+` |Layout.idr |C-compatible struct for hardware
+counter readings
+
+|`+CarbonQuery+` |Layout.idr |C-compatible struct for carbon API
+request/response
+|===
+
+=== Integration Points
+
+* *iseriser* — meta-framework that generated this scaffold
+* *proven* — shared Idris2 verification primitives
+* *typell* — type theory engine for constraint solving
+* *PanLL* — real-time energy dashboard panel
+* *BoJ-server* — remote energy analysis cartridge
+* *VeriSimDB* — historical energy measurement storage
+* *WattTime / Electricity Maps* — external carbon intensity APIs
